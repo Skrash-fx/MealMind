@@ -1,0 +1,152 @@
+@page "/mijnplanning"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>MealMind - Mijn Planning</PageTitle>
+
+<div style="max-width: 900px; margin: 0 auto; padding: 40px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+        <h3 style="font-size: 32px; font-weight: bold; margin: 0;">📅 Mijn Maaltijdplanning</h3>
+        @if (!string.IsNullOrEmpty(userName))
+        {
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="color: #666; font-weight: 500;">👤 @userName</span>
+                <button @onclick="Logout" style="padding: 8px 16px; background: none; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; color: #666;">Uitloggen</button>
+            </div>
+        }
+    </div>
+
+    @if (!isLoaded)
+    {
+        <p style="text-align: center; padding: 60px; color: #999;">Laden...</p>
+    }
+    else if (string.IsNullOrEmpty(userName))
+    {
+        <div style="text-align: center; padding: 60px; background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <div style="font-size: 60px; margin-bottom: 16px;">🔒</div>
+            <h3 style="color: #2c3e50; margin-bottom: 12px;">Log eerst in</h3>
+            <p style="color: #888; margin-bottom: 24px;">Je moet ingelogd zijn om je planning te bekijken.</p>
+            <button @onclick="() => Navigation.NavigateTo("/login")"
+                    style="padding: 12px 28px; background: linear-gradient(135deg, #11998e, #38ef7d); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px;">
+                Naar login
+            </button>
+        </div>
+    }
+    else if (planning == null || !planning.Any())
+    {
+        <div style="text-align: center; padding: 60px; background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <div style="font-size: 60px; margin-bottom: 16px;">🍽️</div>
+            <h3 style="color: #2c3e50; margin-bottom: 12px;">Nog geen recepten gepland</h3>
+            <p style="color: #888; margin-bottom: 24px;">Ga naar de receptenpagina om maaltijden toe te voegen aan je planning.</p>
+            <button @onclick="() => Navigation.NavigateTo("/recepten")"
+                    style="padding: 12px 28px; background: linear-gradient(135deg, #11998e, #38ef7d); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px;">
+                Bekijk recepten
+            </button>
+        </div>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            @foreach (var item in planning)
+            {
+                <div style="display: flex; align-items: center; gap: 20px; padding: 20px 24px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #11998e;">
+                    <!-- Datum badge -->
+                    <div style="min-width: 80px; text-align: center; padding: 10px; background: #e8f8f5; border-radius: 10px;">
+                        @if (item.Datum.HasValue)
+                        {
+                            <div style="font-size: 22px; font-weight: 800; color: #11998e; line-height: 1;">@item.Datum.Value.Day</div>
+                            <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: 600;">@item.Datum.Value.ToString("MMM")</div>
+                        }
+                        else
+                        {
+                            <div style="font-size: 12px; color: #999;">Geen datum</div>
+                        }
+                    </div>
+
+                    <!-- Recept info -->
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 18px; font-weight: 700; color: #2c3e50; margin-bottom: 4px;">@item.ReceptNaam</h4>
+                        <p style="color: #888; font-size: 14px; margin: 0;">@item.ReceptBeschrijving</p>
+                    </div>
+
+                    <!-- Acties -->
+                    <div style="display: flex; gap: 8px;">
+                        <button @onclick="() => Navigation.NavigateTo($"/recepten/{item.FkRecept}")"
+                                style="padding: 8px 14px; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">
+                            🔍 Details
+                        </button>
+                        <button @onclick="() => VerwijderUitPlanning(item.FkRecept)"
+                                style="padding: 8px 14px; background: #fee; color: #c00; border: 1px solid #fcc; border-radius: 8px; cursor: pointer; font-size: 13px;">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <button @onclick="() => Navigation.NavigateTo("/recepten")"
+                    style="padding: 12px 28px; background: linear-gradient(135deg, #11998e, #38ef7d); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                + Meer recepten toevoegen
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private List<PlanningDto>? planning;
+    private string userName = "";
+    private int userId;
+    private bool isLoaded = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var userIdStr = await JS.InvokeAsync<string>("sessionStorage.getItem", "userId");
+
+            if (!string.IsNullOrEmpty(userIdStr))
+            {
+                userId = int.Parse(userIdStr);
+                userName = await JS.InvokeAsync<string>("sessionStorage.getItem", "userName") ?? "";
+                await LaadPlanning();
+            }
+
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LaadPlanning()
+    {
+        planning = await Http.GetFromJsonAsync<List<PlanningDto>>($"gebruikers/{userId}/planning");
+    }
+
+    private async Task VerwijderUitPlanning(int receptId)
+    {
+        var response = await Http.DeleteAsync($"gebruikers/{userId}/planning/{receptId}");
+        if (response.IsSuccessStatusCode)
+            await LaadPlanning();
+        StateHasChanged();
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("sessionStorage.removeItem", "userId");
+        await JS.InvokeVoidAsync("sessionStorage.removeItem", "userName");
+        userName = "";
+        userId = 0;
+        planning = null;
+        StateHasChanged();
+    }
+
+    public class PlanningDto
+    {
+        public int FkRecept { get; set; }
+        public string ReceptNaam { get; set; } = string.Empty;
+        public string ReceptBeschrijving { get; set; } = string.Empty;
+        public DateOnly? Datum { get; set; }
+    }
+}

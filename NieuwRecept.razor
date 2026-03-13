@@ -1,0 +1,111 @@
+@page "/recepten/nieuw"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>MealMind - Nieuw Recept</PageTitle>
+
+<div style="max-width: 600px; margin: 40px auto; padding: 20px;">
+
+    <button @onclick="() => Navigation.NavigateTo("/recepten")"
+            style="margin-bottom: 24px; padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+        ← Terug
+    </button>
+
+    <div style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 28px; color: white;">
+            <h2 style="font-size: 26px; font-weight: 800; margin: 0;">🍳 Nieuw recept toevoegen</h2>
+        </div>
+
+        <div style="padding: 32px;">
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div style="padding: 12px 16px; background: #fee; border: 1px solid #fcc; border-radius: 8px; color: #c00; margin-bottom: 20px;">
+                    @errorMessage
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div style="padding: 12px 16px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; color: #155724; margin-bottom: 20px;">
+                    @successMessage
+                </div>
+            }
+
+            <div class="mb-4">
+                <label style="font-weight: 600; display: block; margin-bottom: 6px; color: #2c3e50;">Naam van het recept</label>
+                <input type="text" class="form-control" placeholder="Bijv. Spaghetti bolognese" @bind="naam"
+                       style="border-radius: 8px; border: 1px solid #ddd; padding: 10px 14px;" />
+            </div>
+
+            <div class="mb-4">
+                <label style="font-weight: 600; display: block; margin-bottom: 6px; color: #2c3e50;">Korte beschrijving</label>
+                <input type="text" class="form-control" placeholder="Bijv. Klassieke pasta met tomatensaus" @bind="beschrijving"
+                       style="border-radius: 8px; border: 1px solid #ddd; padding: 10px 14px;" />
+            </div>
+
+            <button @onclick="VoegReceptToe" disabled="@isLoading"
+                    style="width: 100%; padding: 14px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer;">
+                @(isLoading ? "Bezig..." : "✓ Recept opslaan")
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string naam = "";
+    private string beschrijving = "";
+    private string errorMessage = "";
+    private string successMessage = "";
+    private bool isLoading = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var userIdStr = await JS.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            if (string.IsNullOrEmpty(userIdStr))
+                Navigation.NavigateTo("/login");
+        }
+    }
+
+    private async Task VoegReceptToe()
+    {
+        errorMessage = "";
+        successMessage = "";
+
+        if (string.IsNullOrWhiteSpace(naam) || string.IsNullOrWhiteSpace(beschrijving))
+        {
+            errorMessage = "Vul alle velden in.";
+            return;
+        }
+
+        isLoading = true;
+
+        try
+        {
+            var url = $"/recepten?naam={Uri.EscapeDataString(naam)}&beschrijving={Uri.EscapeDataString(beschrijving)}";
+            var response = await Http.PostAsync(url, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "✅ Recept succesvol toegevoegd!";
+                naam = "";
+                beschrijving = "";
+            }
+            else
+            {
+                errorMessage = "Fout bij het toevoegen van het recept.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Kan geen verbinding maken met de server.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

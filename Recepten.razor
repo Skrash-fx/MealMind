@@ -1,0 +1,182 @@
+@page "/recepten"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>MealMind - Recepten</PageTitle>
+
+<div style="max-width: 1100px; margin: 0 auto; padding: 40px 20px;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+        <h3 style="font-size: 32px; font-weight: bold; margin: 0;">Alle Recepten 🍴</h3>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            @if (!string.IsNullOrEmpty(userName))
+            {
+                <span style="color: #666; font-weight: 500;">👤 @userName</span>
+                <button @onclick="Logout" style="padding: 8px 16px; background: none; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; color: #666;">Uitloggen</button>
+                <button @onclick="() => Navigation.NavigateTo("/recepten/nieuw")"
+                        style="padding: 12px 24px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    + Nieuw recept
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Categorie filter -->
+    @if (categorieen != null && categorieen.Any())
+    {
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;">
+            <button @onclick="() => geselecteerdeCategorie = null"
+                    style="padding: 6px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: 500;
+                           background: @(geselecteerdeCategorie == null ? "linear-gradient(135deg, #11998e, #38ef7d)" : "#f0f0f0");
+                           color: @(geselecteerdeCategorie == null ? "white" : "#555");">
+                Alles
+            </button>
+            @foreach (var cat in categorieen)
+            {
+                <button @onclick="() => geselecteerdeCategorie = cat.CategorieNaam"
+                        style="padding: 6px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: 500;
+                               background: @(geselecteerdeCategorie == cat.CategorieNaam ? "linear-gradient(135deg, #11998e, #38ef7d)" : "#f0f0f0");
+                               color: @(geselecteerdeCategorie == cat.CategorieNaam ? "white" : "#555");">
+                    @cat.CategorieNaam
+                </button>
+            }
+        </div>
+    }
+
+    <!-- Recepten grid -->
+    @if (recepten == null)
+    {
+        <p style="text-align: center; padding: 60px 20px; color: #999;">Laden...</p>
+    }
+    else if (!GefilterdeRecepten.Any())
+    {
+        <p style="text-align: center; padding: 60px 20px; color: #999;">Geen recepten gevonden.</p>
+    }
+    else
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            @foreach (var recept in GefilterdeRecepten)
+            {
+                <div style="padding: 24px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <h4 style="font-size: 20px; font-weight: 600; color: #2c3e50; margin-bottom: 8px;">@recept.ReceptNaam</h4>
+                    <p style="color: #666; line-height: 1.5; margin-bottom: 12px; font-size: 14px;">@recept.ReceptBeshrijving</p>
+
+                    <!-- Categorie tags -->
+                    @if (recept.Categorieen != null && recept.Categorieen.Any())
+                    {
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
+                            @foreach (var cat in recept.Categorieen)
+                            {
+                                <span style="padding: 3px 10px; background: #e8f8f5; color: #11998e; border-radius: 12px; font-size: 12px; font-weight: 500;">
+                                    @cat
+                                </span>
+                            }
+                        </div>
+                    }
+
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button @onclick="() => Navigation.NavigateTo($"/recepten/{recept.IdRecept}")"
+                                style="padding: 8px 14px; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;">
+                            🔍 Details
+                        </button>
+                        @if (!string.IsNullOrEmpty(userName))
+                        {
+                            @if (feedbackMessages.ContainsKey(recept.IdRecept))
+                            {
+                                <span style="font-size: 13px; padding: 8px; color: @(feedbackMessages[recept.IdRecept].success ? "#155724" : "#856404");">
+                                    @feedbackMessages[recept.IdRecept].message
+                                </span>
+                            }
+                            else
+                            {
+                                <button @onclick="() => PlanRecept(recept.IdRecept)"
+                                        style="padding: 8px 14px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;">
+                                    + Plan dit recept
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<ReceptDto>? recepten;
+    private List<CategorieDto>? categorieen;
+    private string? geselecteerdeCategorie;
+    private string userName = "";
+    private int userId;
+    private Dictionary<int, (string message, bool success)> feedbackMessages = new();
+
+    private IEnumerable<ReceptDto> GefilterdeRecepten =>
+        geselecteerdeCategorie == null
+            ? recepten ?? new()
+            : (recepten ?? new()).Where(r => r.Categorieen != null && r.Categorieen.Contains(geselecteerdeCategorie));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var userIdStr = await JS.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var storedName = await JS.InvokeAsync<string>("sessionStorage.getItem", "userName");
+
+            if (!string.IsNullOrEmpty(userIdStr))
+            {
+                userId = int.Parse(userIdStr);
+                userName = storedName ?? "";
+            }
+
+            await LoadData();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        recepten = await Http.GetFromJsonAsync<List<ReceptDto>>("recepten");
+        categorieen = await Http.GetFromJsonAsync<List<CategorieDto>>("categorieen");
+    }
+
+    private async Task PlanRecept(int receptId)
+    {
+        var vandaag = DateOnly.FromDateTime(DateTime.Today);
+        var url = $"/gebruikers/{userId}/planning/{receptId}?datum={vandaag:yyyy-MM-dd}";
+        var response = await Http.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+            feedbackMessages[receptId] = ("✅ Toegevoegd aan planning!", true);
+        else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            feedbackMessages[receptId] = ("⚠️ Al in je planning.", false);
+        else
+            feedbackMessages[receptId] = ("❌ Fout bij toevoegen.", false);
+
+        StateHasChanged();
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("sessionStorage.removeItem", "userId");
+        await JS.InvokeVoidAsync("sessionStorage.removeItem", "userName");
+        userName = "";
+        userId = 0;
+        StateHasChanged();
+    }
+
+    public class ReceptDto
+    {
+        public int IdRecept { get; set; }
+        public string ReceptNaam { get; set; } = string.Empty;
+        public string ReceptBeshrijving { get; set; } = string.Empty;
+        public List<string>? Categorieen { get; set; }
+    }
+
+    public class CategorieDto
+    {
+        public int IdCategorie { get; set; }
+        public string CategorieNaam { get; set; } = string.Empty;
+    }
+}

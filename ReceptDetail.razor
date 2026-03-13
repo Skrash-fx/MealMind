@@ -1,0 +1,167 @@
+@page "/recepten/{Id:int}"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>MealMind - Recept</PageTitle>
+
+<div style="max-width: 700px; margin: 40px auto; padding: 20px;">
+
+    <button @onclick="() => Navigation.NavigateTo("/recepten")"
+            style="margin-bottom: 24px; padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+        ← Terug naar recepten
+    </button>
+
+    @if (recept == null)
+    {
+        <p style="text-align: center; color: #999; padding: 60px;">Laden...</p>
+    }
+    else
+    {
+        <div style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
+            <!-- Header band -->
+            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 32px; color: white;">
+                <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">@recept.ReceptNaam</h1>
+                <p style="opacity: 0.9; font-size: 16px;">@recept.ReceptBeshrijving</p>
+            </div>
+
+            <div style="padding: 32px;">
+
+                <!-- Categorieën -->
+                @if (recept.Categorieen != null && recept.Categorieen.Any())
+                {
+                    <div style="margin-bottom: 28px;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #2c3e50; margin-bottom: 12px;">🏷️ Categorieën</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            @foreach (var cat in recept.Categorieen)
+                            {
+                                <span style="padding: 6px 14px; background: #e8f8f5; color: #11998e; border-radius: 20px; font-size: 14px; font-weight: 500;">
+                                    @cat
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Ingrediënten -->
+                @if (recept.Ingredienten != null && recept.Ingredienten.Any())
+                {
+                    <div style="margin-bottom: 28px;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #2c3e50; margin-bottom: 12px;">🥕 Ingrediënten</h3>
+                        <div style="background: #f9f9f9; border-radius: 12px; overflow: hidden;">
+                            @foreach (var (ingredient, index) in recept.Ingredienten.Select((i, idx) => (i, idx)))
+                            {
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: @(index < recept.Ingredienten.Count - 1 ? "1px solid #eee" : "none");">
+                                    <span style="font-weight: 500; color: #2c3e50;">@ingredient.IngredientNaam</span>
+                                    <span style="color: #888; font-size: 14px;">@ingredient.HoeveelheidIngredient</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p style="color: #999; font-style: italic;">Geen ingrediënten beschikbaar voor dit recept.</p>
+                }
+
+                <!-- Acties -->
+                <div style="display: flex; gap: 12px; margin-top: 8px;">
+                    @if (!string.IsNullOrEmpty(userName))
+                    {
+                        @if (!string.IsNullOrEmpty(feedbackMessage))
+                        {
+                            <div style="padding: 12px 16px; background: #d4edda; border-radius: 8px; color: #155724; font-weight: 500;">
+                                @feedbackMessage
+                            </div>
+                        }
+                        else
+                        {
+                            <button @onclick="PlanRecept"
+                                    style="padding: 12px 24px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px;">
+                                📅 Plan dit recept voor vandaag
+                            </button>
+                        }
+
+                        @if (isAdmin)
+                        {
+                            <button @onclick="VerwijderRecept"
+                                    style="padding: 12px 24px; background: #fee; color: #c00; border: 1px solid #fcc; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px;">
+                                🗑️ Verwijder recept
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <p style="color: #888; font-style: italic;">Log in om dit recept te plannen.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ReceptDetailDto? recept;
+    private string userName = "";
+    private int userId;
+    private bool isAdmin = false;
+    private string feedbackMessage = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var userIdStr = await JS.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var storedName = await JS.InvokeAsync<string>("sessionStorage.getItem", "userName");
+            if (!string.IsNullOrEmpty(userIdStr))
+            {
+                userId = int.Parse(userIdStr);
+                userName = storedName ?? "";
+                isAdmin = userId == 1; // gebruiker 1 = Mats (admin)
+            }
+
+            recept = await Http.GetFromJsonAsync<ReceptDetailDto>($"recepten/{Id}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task PlanRecept()
+    {
+        var vandaag = DateOnly.FromDateTime(DateTime.Today);
+        var url = $"/gebruikers/{userId}/planning/{Id}?datum={vandaag:yyyy-MM-dd}";
+        var response = await Http.PostAsync(url, null);
+
+        feedbackMessage = response.IsSuccessStatusCode
+            ? "✅ Toegevoegd aan je planning!"
+            : response.StatusCode == System.Net.HttpStatusCode.Conflict
+                ? "⚠️ Dit recept staat al in je planning."
+                : "❌ Fout bij het toevoegen.";
+
+        StateHasChanged();
+    }
+
+    private async Task VerwijderRecept()
+    {
+        var response = await Http.DeleteAsync($"recepten/{Id}");
+        if (response.IsSuccessStatusCode)
+            Navigation.NavigateTo("/recepten");
+    }
+
+    public class ReceptDetailDto
+    {
+        public int IdRecept { get; set; }
+        public string ReceptNaam { get; set; } = string.Empty;
+        public string ReceptBeshrijving { get; set; } = string.Empty;
+        public List<string>? Categorieen { get; set; }
+        public List<IngredientDto>? Ingredienten { get; set; }
+    }
+
+    public class IngredientDto
+    {
+        public string IngredientNaam { get; set; } = string.Empty;
+        public string HoeveelheidIngredient { get; set; } = string.Empty;
+    }
+}
