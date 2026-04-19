@@ -53,9 +53,7 @@
             if (gebruiker != null)
             {
                 UserState.UserId = gebruiker.IdGebruiker;
-                UserState.UserName = string.IsNullOrWhiteSpace(gebruiker.GebruikerVoorNaam)
-                    ? (gebruiker.GebruikerUsername ?? gebruiker.GebruikerEmail ?? identifier)
-                    : gebruiker.GebruikerVoorNaam;
+                UserState.UserName = gebruiker.GebruikerUsername ?? gebruiker.GebruikerEmail ?? identifier;
 
                 // persist minimal user info to localStorage so NavMenu and pages can read it on reload
                 var userObj = new
@@ -71,7 +69,7 @@
                 // also store userId for legacy pages
                 await JS.InvokeVoidAsync("localStorage.setItem", "userId", gebruiker.IdGebruiker.ToString());
 
-                Nav.NavigateTo("/mijnplanning");
+                Nav.NavigateTo("/planning");
             }
             else
             {

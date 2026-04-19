@@ -54,9 +54,8 @@ public partial class MealMindDbContext : DbContext
 
         modelBuilder.Entity<Gebruikerkiestrecept>(entity =>
         {
-            entity.HasKey(e => new { e.FkRecept, e.FkGebruiker })
-                .HasName("PRIMARY")
-                .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+            entity.HasKey(e => new { e.FkGebruiker, e.Datum })
+    .HasName("PRIMARY");
 
             entity.ToTable("gebruikerkiestrecept");
 
@@ -89,6 +88,24 @@ public partial class MealMindDbContext : DbContext
             entity.Property(e => e.IdRecept).HasColumnName("idRecept");
             entity.Property(e => e.ReceptBeshrijving).HasMaxLength(45);
             entity.Property(e => e.ReceptNaam).HasColumnType("mediumtext");
+
+            entity.HasMany(r => r.FkCategories)
+                .WithMany(c => c.FkRecepts)
+                .UsingEntity<Dictionary<string, object>>(
+                    "categorie_has_recept",
+                    j => j.HasOne<Categorie>()
+                          .WithMany()
+                          .HasForeignKey("FkCategorie")
+                          .HasConstraintName("fk_categorie_has_recept_categorie"),
+                    j => j.HasOne<Recept>()
+                          .WithMany()
+                          .HasForeignKey("FkRecept")
+                          .HasConstraintName("fk_categorie_has_recept_recept"),
+                    j =>
+                    {
+                        j.HasKey("FkRecept", "FkCategorie");
+                        j.ToTable("categorie_has_recept");
+                    });
         });
 
         modelBuilder.Entity<ReceptHasIngredient>(entity =>

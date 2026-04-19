@@ -9,10 +9,11 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient("MealMindAPI", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7056/");
+    client.BaseAddress = new Uri("http://localhost:5269/");
 });
 
 builder.Services.AddScoped<UserState>();
+
 
 var app = builder.Build();
 

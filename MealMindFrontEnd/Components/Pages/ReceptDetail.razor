@@ -3,72 +3,110 @@
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
-<PageTitle>Recept</PageTitle>
+<PageTitle>@(recept?.receptNaam ?? "Recept")</PageTitle>
 
-<div>
-    @if (recept == null)
+<div class="fade-in">
+    @if (laden)
     {
-        <p style="text-align:center; color:#999;">Laden...</p>
+        <div class="loader">⏳ Recept laden...</div>
+    }
+    else if (recept == null)
+    {
+        <div class="mm-card" style="text-align:center; padding:48px;">
+            <div style="font-size:2.5rem; margin-bottom:12px;">❌</div>
+            <div class="page-title" style="margin-bottom:8px;">Recept niet gevonden</div>
+            <button class="btn-mm" @onclick="TerugNaarOverzicht">← Terug</button>
+        </div>
     }
     else
     {
-        <div class="page-card">
-            <h2 style="color:var(--green-dark); margin-bottom:6px;">@recept.receptNaam</h2>
-            <p style="color:#666; font-size:15px; margin-bottom:14px;">@recept.receptBeshrijving</p>
+        <div style="margin-bottom:24px;">
+            <button class="btn-mm-outline" @onclick="TerugNaarOverzicht"
+                    style="font-size:0.85rem; padding:7px 14px; margin-bottom:16px;">
+                ← Terug naar overzicht
+            </button>
 
-            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;">
-                @foreach (var cat in recept.categorieen)
-                {
-                    <span style="background:var(--accent); color:var(--green-dark); padding:6px 14px; border-radius:20px; font-weight:600;">@cat</span>
-                }
-            </div>
+            <div class="page-title">@recept.receptNaam</div>
+            @if (!string.IsNullOrEmpty(recept.receptBeshrijving))
+            {
+                <div class="page-subtitle">@recept.receptBeshrijving</div>
+            }
 
-            <h3 style="color:#333; margin-bottom:10px;">🧂 Ingrediënten</h3>
-            <div style="overflow:auto;">
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead>
-                        <tr style="background:#f7f7f7;">
-                            <th style="padding:12px; text-align:left;">Ingredient</th>
-                            <th style="padding:12px; text-align:left;">Hoeveelheid</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var ing in recept.ingredienten)
-                        {
-                            <tr style="border-bottom:1px solid #f0f0f0;">
-                                <td style="padding:12px; color:#333;">@ing.ingredientNaam</td>
-                                <td style="padding:12px; color:#666;">@ing.hoeveelheidIngredient</td>
+            @if (recept.categorieen.Any())
+            {
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                    @foreach (var cat in recept.categorieen)
+                    {
+                        <span class="badge-mm">@cat</span>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="mm-card">
+            <h3 style="font-family:'Poppins',sans-serif; font-weight:700; color:var(--green-dark); margin-bottom:16px; font-size:1.1rem;">🧂 Ingrediënten</h3>
+            @if (!recept.ingredienten.Any())
+            {
+                <p style="color:var(--text-muted); font-style:italic;">Geen ingrediënten opgegeven.</p>
+            }
+            else
+            {
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom:2px solid var(--green-pale);">
+                                <th style="padding:10px 14px; text-align:left; font-family:'Poppins',sans-serif; font-size:0.85rem; color:var(--text-muted); font-weight:600;">INGREDIENT</th>
+                                <th style="padding:10px 14px; text-align:left; font-family:'Poppins',sans-serif; font-size:0.85rem; color:var(--text-muted); font-weight:600;">HOEVEELHEID</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <div style="margin-top:18px;">
-                <button class="btn-mm" @onclick="BackToList">← Terug naar overzicht</button>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach (var ing in recept.ingredienten)
+                            {
+                                <tr style="border-bottom:1px solid var(--green-pale);">
+                                    <td style="padding:12px 14px; font-weight:500; color:var(--text);">@ing.ingredientNaam</td>
+                                    <td style="padding:12px 14px; color:var(--text-muted);">@ing.hoeveelheidIngredient</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     }
 </div>
 
 @code {
     [Parameter] public int Id { get; set; }
-    private ReceptDetailfunc? recept;
+    private ReceptDetailModel? recept;
+    private bool laden = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var client = ClientFactory.CreateClient("MealMindAPI");
-            recept = await client.GetFromJsonAsync<ReceptDetailfunc>($"recepten/{Id}");
-            StateHasChanged();
+            try
+            {
+                var client = ClientFactory.CreateClient("MealMindAPI");
+                recept = await client.GetFromJsonAsync<ReceptDetailModel>($"recepten/{Id}");
+            }
+            catch { }
+            finally
+            {
+                laden = false;
+                StateHasChanged();
+            }
         }
     }
 
-    private void BackToList() => Nav.NavigateTo("/recepten");
+    private void TerugNaarOverzicht() => Nav.NavigateTo("/recepten");
 
-    public class IngredientItem { public string ingredientNaam { get; set; } = ""; public string hoeveelheidIngredient { get; set; } = ""; }
-    public class ReceptDetailfunc
+    public class IngredientItem
+    {
+        public string ingredientNaam { get; set; } = "";
+        public string hoeveelheidIngredient { get; set; } = "";
+    }
+
+    public class ReceptDetailModel
     {
         public int idRecept { get; set; }
         public string receptNaam { get; set; } = "";

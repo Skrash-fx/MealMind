@@ -2,6 +2,8 @@
 @inject UserState UserState
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@implements IDisposable
+@rendermode InteractiveServer
 @using System.Text.Json
 
 <!-- Pure HTML/CSS toggle: no JS required for open/close -->
@@ -37,14 +39,7 @@
             <div style="font-size:1.2rem;">🥗</div>
             <div style="font-weight:700;">MealMind</div>
         </div>
-
-        <div style="display:flex; gap:8px; align-items:center;">
-            @if (UserState.IsLoggedIn)
-            {
-                <button class="btn-mm-outline" @onclick="Logout" style="padding:6px 10px; font-size:0.9rem;">Logout</button>
-            }
-            <label for="nav-toggle" class="drawer-close" aria-label="Sluiten" style="cursor:pointer;">✕</label>
-        </div>
+        <label for="nav-toggle" class="drawer-close" aria-label="Sluiten" style="cursor:pointer;">✕</label>
     </div>
 
     <ul class="drawer-links">
@@ -63,22 +58,22 @@
                 <NavLink class="nav-link" href="planning">📅 Planning</NavLink>
             </label>
         </li>
-        <li>
-            <label for="nav-toggle" class="drawer-link">
-                <NavLink class="nav-link" href="mijnplanning">🗓️ Mijn Planning</NavLink>
-            </label>
-        </li>
-        <li>
-            <label for="nav-toggle" class="drawer-link">
-                <NavLink class="nav-link" href="login">👤 Login</NavLink>
-            </label>
-        </li>
+
+        @if (!UserState.IsLoggedIn)
+        {
+            <li>
+                <label for="nav-toggle" class="drawer-link">
+                    <NavLink class="nav-link" href="login">👤 Login</NavLink>
+                </label>
+            </li>
+        }
     </ul>
 
     <div class="drawer-footer" style="margin-top:auto; padding:16px; border-top:1px solid rgba(0,0,0,0.04);">
         @if (UserState.IsLoggedIn)
         {
-            <button class="btn-mm" @onclick="LogoutFromDrawer">Logout</button>
+            <div style="color:#666; font-size:0.9rem; margin-bottom:8px;">Ingelogd als <strong>@UserState.UserName</strong></div>
+            <button class="btn-mm" style="width:100%;" @onclick="LogoutFromDrawer">🚪 Uitloggen</button>
         }
     </div>
 </aside>
@@ -96,9 +91,13 @@
                     var obj = JsonSerializer.Deserialize<LocalUser?>(json);
                     if (obj != null)
                     {
-                        UserState.UserId = obj.IdGebruiker;
-                        UserState.UserName = obj.GebruikerVoorNaam ?? obj.GebruikerUsername ?? obj.GebruikerEmail ?? "";
-                        StateHasChanged();
+                        var naam = obj.GebruikerUsername ?? obj.GebruikerEmail ?? "";
+                        if (!string.IsNullOrEmpty(naam))
+                        {
+                            UserState.UserId = obj.IdGebruiker;
+                            UserState.UserName = naam;
+                            StateHasChanged();
+                        }
                     }
                 }
             }
@@ -107,7 +106,6 @@
             }
         }
     }
-
     private async Task Logout()
     {
         UserState.UserId = 0;
@@ -131,6 +129,16 @@
         public string? GebruikerVoorNaam { get; set; }
         public string? GebruikerUsername { get; set; }
         public string? GebruikerEmail { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        UserState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        UserState.OnChange -= StateHasChanged;
     }
 }
 
