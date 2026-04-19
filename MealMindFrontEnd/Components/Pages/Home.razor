@@ -1,27 +1,51 @@
-﻿@page "/"
-@page "/home"
-<PageTitle>Home</PageTitle>
+﻿@page "/home"
+@layout Emptylayout
+@inject NavigationManager Nav
+@rendermode InteractiveServer
 
-<div class="page-intro">
-    <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
-        <div style="font-size:2.4rem;">🥗</div>
-        <div>
-            <div class="page-title">Welkom bij MealMind</div>
-            <div class="page-subtitle">Snel je week plannen en lekkere recepten ontdekken</div>
+<PageTitle>MealMind — Home</PageTitle>
+
+<div class="hero-light">
+    <div class="hero-blob hero-blob-1"></div>
+    <div class="hero-blob hero-blob-2"></div>
+    <div class="hero-blob hero-blob-3"></div>
+
+    <div class="hero-nav hero-nav-light">
+        <div class="hero-nav-logo">
+            <img src="/logoMealMind.jpg" style="height:36px; width:36px; object-fit:contain;" alt="logo" />
+            <span class="hero-nav-name-light">MealMind</span>
+        </div>
+        <div class="hero-nav-links">
+            <a href="/recepten">Recepten</a>
+            <a href="/planning">Planning</a>
+            <button class="hero-btn-primary" style="padding:8px 20px; font-size:0.88rem;" @onclick="NaarPlanning">Begin nu</button>
         </div>
     </div>
 
-    <div style="margin-top:22px;" class="card-grid">
-        <a class="mm-card" href="recepten">
-            <h3 style="color:var(--green-dark); margin-bottom:8px;">🍽️ Recepten</h3>
-            <p style="color:#666;">Bekijk, zoek en maak nieuwe recepten.</p>
-            <div style="margin-top:12px;"><span class="btn-mm">Naar recepten</span></div>
-        </a>
+    <div class="hero-content">
+        <div class="hero-tag hero-tag-light">Jouw persoonlijke maaltijdplanner</div>
+        <h1 class="hero-title-light">
+            Welkom bij<br />
+            <span class="hero-title-accent-light">MealMind</span>
+        </h1>
+        <p class="hero-sub-light">
+            Plan je week, ontdek recepten en eet gezonder —<br />
+            zonder stress, elke dag opnieuw.
+        </p>
+        <div class="hero-actions">
+            <button class="hero-btn-primary" @onclick="NaarPlanning">Begin met plannen</button>
+            <button class="hero-btn-secondary-light" @onclick="NaarRecepten">Bekijk recepten</button>
+        </div>
+    </div>
 
-        <a class="mm-card" href="mijnplanning">
-            <h3 style="color:var(--green-dark); margin-bottom:8px;">📅 Mijn Planning</h3>
-            <p style="color:#666;">Jouw geplande maaltijden voor de komende week.</p>
-            <div style="margin-top:12px;"><span class="btn-mm">Bekijk planning</span></div>
-        </a>
+    <div class="hero-pills">
+        <div class="hero-pill-light">Automatische weekplanning</div>
+        <div class="hero-pill-light">Recepten op maat</div>
+        <div class="hero-pill-light">Opgeslagen in de cloud</div>
     </div>
 </div>
+
+@code {
+    private void NaarPlanning() => Nav.NavigateTo("/planning");
+    private void NaarRecepten() => Nav.NavigateTo("/recepten");
+}

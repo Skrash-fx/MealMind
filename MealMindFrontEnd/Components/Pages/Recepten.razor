@@ -5,22 +5,25 @@
 
 <PageTitle>Recepten</PageTitle>
 
-<div>
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;">
-        <h2 class="page-title">🍽️ Alle Recepten</h2>
+<div class="fade-in">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:24px;">
+        <div>
+            <div class="page-title">Alle Recepten</div>
+            <div class="page-subtitle">Ontdek en beheer je recepten</div>
+        </div>
         <a class="btn-mm" href="/recepten/aanmaken">+ Nieuw recept</a>
     </div>
 
     @if (recepten == null)
     {
-        <p style="text-align:center; color:#999;">Laden...</p>
+        <div class="loader">Recepten laden...</div>
     }
     else if (!recepten.Any())
     {
-        <div class="mm-card" style="text-align:center; padding:36px;">
-            <div style="font-size:2rem; margin-bottom:8px;">🍽️</div>
-            <div style="color:var(--green-mid); font-weight:700; margin-bottom:10px;">Nog geen recepten</div>
-            <a class="btn-mm" href="/recepten/aanmaken">Voeg er één toe</a>
+        <div class="mm-card" style="text-align:center; padding:48px;">
+            <div class="page-title" style="margin-bottom:8px;">Nog geen recepten</div>
+            <div class="page-subtitle" style="margin-bottom:20px;">Voeg je eerste recept toe om te beginnen.</div>
+            <a class="btn-mm" href="/recepten/aanmaken">Recept toevoegen</a>
         </div>
     }
     else
@@ -29,12 +32,12 @@
             @foreach (var r in recepten)
             {
                 <div class="mm-card" style="cursor:pointer;" @onclick="() => OpenDetail(r.idRecept)">
-                    <h4 style="color:var(--green-dark); margin-bottom:8px;">@r.receptNaam</h4>
-                    <p style="color:#666; margin-bottom:12px;">@r.receptBeshrijving</p>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <h4 style="color:var(--green-dark); margin-bottom:8px; font-size:1.05rem;">@r.receptNaam</h4>
+                    <p style="color:var(--text-muted); margin-bottom:14px; font-size:0.9rem; line-height:1.5;">@r.receptBeshrijving</p>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
                         @foreach (var cat in r.categorieen)
                         {
-                            <span style="background:var(--accent); color:var(--green-dark); padding:6px 10px; border-radius:20px; font-size:13px;">@cat</span>
+                            <span class="badge-mm">@cat</span>
                         }
                     </div>
                 </div>

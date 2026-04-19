@@ -6,77 +6,32 @@
 @rendermode InteractiveServer
 @using System.Text.Json
 
-<!-- Pure HTML/CSS toggle: no JS required for open/close -->
-<input id="nav-toggle" type="checkbox" class="nav-toggle" aria-hidden="true" />
-
 <header class="topbar">
-    <div class="topbar-brand">
-        <div class="brand-icon">🥗</div>
+    <a class="topbar-brand" href="/home">
+        <img src="/logoMealMind.jpg" style="height:36px; width:36px; object-fit:contain;" alt="MealMind logo" />
         <div>
             <div class="brand-name">MealMind</div>
-            <div class="brand-sub">Jouw week, jouw maaltijden</div>
         </div>
-    </div>
+    </a>
+
+    <nav class="topbar-nav">
+        <NavLink href="/home" Match="NavLinkMatch.All">Home</NavLink>
+        <NavLink href="/recepten">Recepten</NavLink>
+        <NavLink href="/planning">Planning</NavLink>
+    </nav>
 
     <div class="topbar-right">
         @if (UserState.IsLoggedIn)
         {
-            <div class="user-badge" title="Ingelogd als">@UserState.UserName</div>
+            <div class="user-badge">@UserState.UserName</div>
+            <button class="btn-logout" @onclick="Logout">Uitloggen</button>
         }
-        <label for="nav-toggle" class="hamburger" aria-hidden="true" role="button" title="Menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </label>
+        else
+        {
+            <a class="btn-mm" href="/login">Inloggen</a>
+        }
     </div>
 </header>
-
-<div class="drawer-overlay" aria-hidden="true"></div>
-
-<aside class="drawer" role="navigation" aria-hidden="true">
-    <div class="drawer-header" style="justify-content:space-between; align-items:center;">
-        <div style="display:flex; gap:10px; align-items:center;">
-            <div style="font-size:1.2rem;">🥗</div>
-            <div style="font-weight:700;">MealMind</div>
-        </div>
-        <label for="nav-toggle" class="drawer-close" aria-label="Sluiten" style="cursor:pointer;">✕</label>
-    </div>
-
-    <ul class="drawer-links">
-        <li>
-            <label for="nav-toggle" class="drawer-link">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">🏠 Home</NavLink>
-            </label>
-        </li>
-        <li>
-            <label for="nav-toggle" class="drawer-link">
-                <NavLink class="nav-link" href="recepten">📚 Recepten</NavLink>
-            </label>
-        </li>
-        <li>
-            <label for="nav-toggle" class="drawer-link">
-                <NavLink class="nav-link" href="planning">📅 Planning</NavLink>
-            </label>
-        </li>
-
-        @if (!UserState.IsLoggedIn)
-        {
-            <li>
-                <label for="nav-toggle" class="drawer-link">
-                    <NavLink class="nav-link" href="login">👤 Login</NavLink>
-                </label>
-            </li>
-        }
-    </ul>
-
-    <div class="drawer-footer" style="margin-top:auto; padding:16px; border-top:1px solid rgba(0,0,0,0.04);">
-        @if (UserState.IsLoggedIn)
-        {
-            <div style="color:#666; font-size:0.9rem; margin-bottom:8px;">Ingelogd als <strong>@UserState.UserName</strong></div>
-            <button class="btn-mm" style="width:100%;" @onclick="LogoutFromDrawer">🚪 Uitloggen</button>
-        }
-    </div>
-</aside>
 
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -101,11 +56,10 @@
                     }
                 }
             }
-            catch
-            {
-            }
+            catch { }
         }
     }
+
     private async Task Logout()
     {
         UserState.UserId = 0;
@@ -113,22 +67,6 @@
         await JS.InvokeVoidAsync("localStorage.removeItem", "mmUser");
         await JS.InvokeVoidAsync("localStorage.removeItem", "userId");
         Nav.NavigateTo("/");
-    }
-
-    private async Task LogoutFromDrawer()
-    {
-        // close drawer
-        await JS.InvokeVoidAsync("eval", "document.getElementById('nav-toggle') && (document.getElementById('nav-toggle').checked = false)");
-        // then logout
-        await Logout();
-    }
-
-    private class LocalUser
-    {
-        public int IdGebruiker { get; set; }
-        public string? GebruikerVoorNaam { get; set; }
-        public string? GebruikerUsername { get; set; }
-        public string? GebruikerEmail { get; set; }
     }
 
     protected override void OnInitialized()
@@ -140,5 +78,11 @@
     {
         UserState.OnChange -= StateHasChanged;
     }
-}
 
+    private class LocalUser
+    {
+        public int IdGebruiker { get; set; }
+        public string? GebruikerUsername { get; set; }
+        public string? GebruikerEmail { get; set; }
+    }
+}

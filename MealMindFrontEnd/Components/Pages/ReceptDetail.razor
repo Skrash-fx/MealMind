@@ -8,22 +8,20 @@
 <div class="fade-in">
     @if (laden)
     {
-        <div class="loader">⏳ Recept laden...</div>
+        <div class="loader">Recept laden...</div>
     }
     else if (recept == null)
     {
         <div class="mm-card" style="text-align:center; padding:48px;">
-            <div style="font-size:2.5rem; margin-bottom:12px;">❌</div>
             <div class="page-title" style="margin-bottom:8px;">Recept niet gevonden</div>
-            <button class="btn-mm" @onclick="TerugNaarOverzicht">← Terug</button>
+            <button class="btn-mm" @onclick="TerugNaarOverzicht">Terug naar overzicht</button>
         </div>
     }
     else
     {
         <div style="margin-bottom:24px;">
-            <button class="btn-mm-outline" @onclick="TerugNaarOverzicht"
-                    style="font-size:0.85rem; padding:7px 14px; margin-bottom:16px;">
-                ← Terug naar overzicht
+            <button class="btn-mm-outline" @onclick="TerugNaarOverzicht" style="font-size:0.85rem; padding:7px 16px; margin-bottom:20px;">
+                Terug naar overzicht
             </button>
 
             <div class="page-title">@recept.receptNaam</div>
@@ -34,7 +32,7 @@
 
             @if (recept.categorieen.Any())
             {
-                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
                     @foreach (var cat in recept.categorieen)
                     {
                         <span class="badge-mm">@cat</span>
@@ -44,7 +42,7 @@
         </div>
 
         <div class="mm-card">
-            <h3 style="font-family:'Poppins',sans-serif; font-weight:700; color:var(--green-dark); margin-bottom:16px; font-size:1.1rem;">🧂 Ingrediënten</h3>
+            <h3 style="font-family:'Poppins',sans-serif; font-weight:700; color:var(--green-dark); margin-bottom:20px; font-size:1.1rem;">Ingrediënten</h3>
             @if (!recept.ingredienten.Any())
             {
                 <p style="color:var(--text-muted); font-style:italic;">Geen ingrediënten opgegeven.</p>
@@ -55,16 +53,16 @@
                     <table style="width:100%; border-collapse:collapse;">
                         <thead>
                             <tr style="border-bottom:2px solid var(--green-pale);">
-                                <th style="padding:10px 14px; text-align:left; font-family:'Poppins',sans-serif; font-size:0.85rem; color:var(--text-muted); font-weight:600;">INGREDIENT</th>
-                                <th style="padding:10px 14px; text-align:left; font-family:'Poppins',sans-serif; font-size:0.85rem; color:var(--text-muted); font-weight:600;">HOEVEELHEID</th>
+                                <th style="padding:10px 16px; text-align:left; font-family:'Poppins',sans-serif; font-size:0.8rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Ingredient</th>
+                                <th style="padding:10px 16px; text-align:left; font-family:'Poppins',sans-serif; font-size:0.8rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Hoeveelheid</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var ing in recept.ingredienten)
                             {
                                 <tr style="border-bottom:1px solid var(--green-pale);">
-                                    <td style="padding:12px 14px; font-weight:500; color:var(--text);">@ing.ingredientNaam</td>
-                                    <td style="padding:12px 14px; color:var(--text-muted);">@ing.hoeveelheidIngredient</td>
+                                    <td style="padding:13px 16px; font-weight:500; color:var(--text);">@ing.ingredientNaam</td>
+                                    <td style="padding:13px 16px; color:var(--text-muted);">@ing.hoeveelheidIngredient</td>
                                 </tr>
                             }
                         </tbody>
@@ -90,22 +88,13 @@
                 recept = await client.GetFromJsonAsync<ReceptDetailModel>($"recepten/{Id}");
             }
             catch { }
-            finally
-            {
-                laden = false;
-                StateHasChanged();
-            }
+            finally { laden = false; StateHasChanged(); }
         }
     }
 
     private void TerugNaarOverzicht() => Nav.NavigateTo("/recepten");
 
-    public class IngredientItem
-    {
-        public string ingredientNaam { get; set; } = "";
-        public string hoeveelheidIngredient { get; set; } = "";
-    }
-
+    public class IngredientItem { public string ingredientNaam { get; set; } = ""; public string hoeveelheidIngredient { get; set; } = ""; }
     public class ReceptDetailModel
     {
         public int idRecept { get; set; }

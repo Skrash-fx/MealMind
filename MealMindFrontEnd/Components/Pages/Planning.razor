@@ -13,7 +13,6 @@
     @if (geladen && !UserState.IsLoggedIn)
     {
         <div class="mm-card" style="text-align:center; padding:48px;">
-            <div style="font-size:2.5rem; margin-bottom:12px;">🔒</div>
             <div class="page-title" style="margin-bottom:8px;">Niet ingelogd</div>
             <div class="page-subtitle">Log in om je weekplanning te bekijken en beheren.</div>
             <a class="btn-mm" href="/login">Inloggen</a>
@@ -21,30 +20,28 @@
     }
     else if (!geladen)
     {
-        <div class="loader">⏳ Even geduld...</div>
+        <div class="loader">Even geduld...</div>
     }
     else
     {
-        <!-- Header -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:28px;">
             <div>
-                <div class="page-title">📅 Weekplanning</div>
+                <div class="page-title">Weekplanning</div>
                 <div class="page-subtitle">Plan je maaltijden voor de komende 7 dagen</div>
             </div>
-
             @if (heeftPlanning)
             {
                 <div style="display:flex; gap:10px;">
-                    <button class="btn-mm-outline" @onclick="Genereer" disabled="@bezig">🔀 Hergenereer</button>
+                    <button class="btn-mm-outline" @onclick="Genereer" disabled="@bezig">Hergenereer</button>
                     <button class="btn-mm" @onclick="OpslaanPlanning" disabled="@bezig">
                         @if (bezig)
                         {
-                            <span>⏳ Bezig...</span>
+                            <span>Bezig...</span>
                         }
                         else
                         {
 
-                            <span>💾 Opslaan</span>
+                            <span>Opslaan</span>
                         }
                     </button>
                 </div>
@@ -53,63 +50,57 @@
 
         @if (!string.IsNullOrEmpty(melding))
         {
-            <div class="mm-card" style="background:@(meldingFout ? "#fff3f0" : "#f0fdf7"); border:1.5px solid @(meldingFout ? "#f2c2b8" : "#b2e8d0"); color:@(meldingFout ? "#8a2b11" : "#1a5c45"); padding:14px; margin-bottom:18px;">
+            <div style="background:@(meldingFout ? "#fff3f0" : "#f0fdf7"); border:1.5px solid @(meldingFout ? "#f2c2b8" : "#b2e8d0"); color:@(meldingFout ? "#8a2b11" : "#1a5c45"); padding:14px 18px; border-radius:12px; margin-bottom:20px; font-weight:500;">
                 @melding
             </div>
         }
 
-        <!-- Lege staat -->
         @if (!heeftPlanning)
         {
-            <div class="mm-card" style="text-align:center; padding:56px 32px;">
-                <div style="font-size:3rem; margin-bottom:16px;">🍽️</div>
-                <div class="page-title" style="margin-bottom:8px;">Nog geen planning</div>
-                <div class="page-subtitle" style="margin-bottom:24px;">
-                    Genereer automatisch een weekplanning op basis van je recepten,<br />
-                    of voeg zelf maaltijden toe per dag via de dropdown.
+            <div class="mm-card" style="text-align:center; padding:64px 32px;">
+                <div class="page-title" style="margin-bottom:10px;">Nog geen planning</div>
+                <div class="page-subtitle" style="margin-bottom:28px;">
+                    Genereer automatisch een weekplanning op basis van je recepten,
+                    of voeg zelf maaltijden toe per dag.
                 </div>
                 <button class="btn-mm" @onclick="Genereer" disabled="@bezig">
                     @if (bezig)
                     {
-                        <span>⏳ Genereren...</span>
+                        <span>Genereren...</span>
                     }
                     else
                     {
 
-                        <span>🔀 Genereer planning</span>
+                        <span>Genereer planning</span>
                     }
                 </button>
             </div>
         }
         else
         {
-            <!-- Planning kaarten per dag -->
-            <div style="display:grid; gap:14px;">
+            <div style="display:grid; gap:12px;">
                 @foreach (var dag in planning)
                 {
-                    <div class="mm-card" style="display:grid; grid-template-columns:140px 1fr auto; align-items:center; gap:16px;">
+                    <div class="mm-card" style="display:grid; grid-template-columns:150px 1fr auto; align-items:center; gap:20px;">
 
-                        <!-- Datum blok -->
-                        <div style="background:var(--grad-pale); border-radius:12px; padding:12px 14px; text-align:center;">
+                        <div style="background:var(--green-pale); border-radius:12px; padding:14px; text-align:center;">
                             <div style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1rem; color:var(--green-dark);">@DagNaam(dag.datum)</div>
-                            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">@dag.datum?.ToString("dd/MM")</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:3px;">@dag.datum?.ToString("dd/MM")</div>
                         </div>
 
-                        <!-- Recept info + dropdown -->
                         <div>
                             @if (string.IsNullOrEmpty(dag.receptNaam))
                             {
-                                <div style="color:#b0c8bc; font-style:italic; font-size:0.95rem; margin-bottom:8px;">Geen maaltijd gepland</div>
+                                <div style="color:#b0c8bc; font-style:italic; font-size:0.92rem; margin-bottom:8px;">Geen maaltijd gepland</div>
                             }
                             else
                             {
-                                <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:1rem; color:var(--green-dark); margin-bottom:3px;">@dag.receptNaam</div>
+                                <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:1rem; color:var(--green-dark); margin-bottom:4px;">@dag.receptNaam</div>
                                 @if (!string.IsNullOrEmpty(dag.beschrijving))
                                 {
                                     <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">@dag.beschrijving</div>
                                 }
                             }
-
                             <select @onchange="e => WijzigDagLokaal(dag, e.Value?.ToString())"
                                     style="margin-top:6px; padding:7px 12px; border-radius:8px; border:1.5px solid rgba(26,92,69,0.14); font-family:'DM Sans',sans-serif; font-size:0.88rem; color:var(--text); background:var(--white); cursor:pointer; max-width:280px;">
                                 <option value="">— Kies recept —</option>
@@ -120,35 +111,31 @@
                             </select>
                         </div>
 
-                        <!-- Acties -->
                         <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
                             @if (dag.fkRecept > 0)
                             {
-                                <a class="btn-mm-outline" href="/recepten/@dag.fkRecept"
-                                   style="white-space:nowrap; font-size:0.85rem; padding:7px 14px;">👁️ Bekijk</a>
+                                <a class="btn-mm-outline" href="/recepten/@dag.fkRecept" style="font-size:0.85rem; padding:7px 14px; white-space:nowrap;">Bekijk</a>
                             }
                             <button @onclick="() => VerwijderDag(dag)"
                                     style="background:none; border:1.5px solid #f2c2b8; color:#c0392b; border-radius:8px; padding:6px 12px; font-size:0.82rem; cursor:pointer; font-family:'DM Sans',sans-serif;">
-                                🗑️ Leeg
+                                Leeg
                             </button>
                         </div>
-
                     </div>
                 }
             </div>
 
-            <!-- Opslaan knop onderaan -->
-            <div style="margin-top:28px; display:flex; justify-content:flex-end; gap:12px;">
-                <button class="btn-mm-outline" @onclick="Genereer" disabled="@bezig">🔀 Hergenereer</button>
+            <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:12px;">
+                <button class="btn-mm-outline" @onclick="Genereer" disabled="@bezig">Hergenereer</button>
                 <button class="btn-mm" @onclick="OpslaanPlanning" disabled="@bezig">
                     @if (bezig)
                     {
-                        <span>⏳ Opslaan...</span>
+                        <span>Opslaan...</span>
                     }
                     else
                     {
 
-                        <span>💾 Planning opslaan</span>
+                        <span>Planning opslaan</span>
                     }
                 </button>
             </div>
@@ -186,12 +173,8 @@
                 }
                 catch { }
             }
-
             geladen = true;
-
-            if (UserState.IsLoggedIn)
-                await LaadData();
-
+            if (UserState.IsLoggedIn) await LaadData();
             StateHasChanged();
         }
     }
@@ -203,15 +186,12 @@
             var client = ClientFactory.CreateClient("MealMindAPI");
             var raw = await client.GetFromJsonAsync<List<PlanningDto>>($"gebruikers/{UserState.UserId}/planning") ?? new();
             alleRecepten = await client.GetFromJsonAsync<List<ReceptKeuze>>("recepten") ?? new();
-
-            // Bouw altijd 7 dagen op vanaf vandaag
             planning = new List<PlanningItem>();
             var vandaag = DateOnly.FromDateTime(DateTime.Today);
             for (int i = 0; i < 7; i++)
             {
                 var datum = vandaag.AddDays(i);
-                var match = raw.FirstOrDefault(d =>
-                 DateOnly.TryParse(d.datum, out var parsed) && parsed == datum);
+                var match = raw.FirstOrDefault(d => DateOnly.TryParse(d.datum, out var p) && p == datum);
                 planning.Add(new PlanningItem
                 {
                     datum = datum,
@@ -221,133 +201,68 @@
                 });
             }
         }
-        catch (Exception ex)
-        {
-            ToonMelding("Kon planning niet laden: " + ex.Message, fout: true);
-        }
+        catch (Exception ex) { ToonMelding("Kon planning niet laden: " + ex.Message, fout: true); }
     }
 
     private async Task Genereer()
     {
-        bezig = true;
-        melding = "";
-        StateHasChanged();
+        bezig = true; melding = ""; StateHasChanged();
         try
         {
             var client = ClientFactory.CreateClient("MealMindAPI");
             await client.PostAsync($"gebruikers/{UserState.UserId}/planning/genereer", null);
             await LaadData();
-            ToonMelding("✅ Planning gegenereerd! Pas aan waar nodig en klik op Opslaan.");
+            ToonMelding("Planning gegenereerd! Pas aan waar nodig en klik op Opslaan.");
         }
-        catch (Exception ex)
-        {
-            ToonMelding("Fout bij genereren: " + ex.Message, fout: true);
-        }
-        finally
-        {
-            bezig = false;
-            StateHasChanged();
-        }
+        catch (Exception ex) { ToonMelding("Fout bij genereren: " + ex.Message, fout: true); }
+        finally { bezig = false; StateHasChanged(); }
     }
 
     private async Task OpslaanPlanning()
     {
-        bezig = true;
-        melding = "";
-        StateHasChanged();
-
+        bezig = true; melding = ""; StateHasChanged();
         try
         {
             var client = ClientFactory.CreateClient("MealMindAPI");
-            foreach (var dag in planning.Where(d => d.datum.HasValue))
+            foreach (var dag in planning.Where(d => d.datum.HasValue && d.fkRecept > 0))
             {
-                if (dag.fkRecept > 0)
-                {
-                    // Sla dag op met recept
-                    await client.PutAsJsonAsync(
-                        $"gebruikers/{UserState.UserId}/planning/{dag.datum!.Value:yyyy-MM-dd}",
-                        new { ReceptId = dag.fkRecept });
-                }
+                await client.PutAsJsonAsync(
+                    $"gebruikers/{UserState.UserId}/planning/{dag.datum!.Value:yyyy-MM-dd}",
+                    new { ReceptId = dag.fkRecept });
             }
-            ToonMelding("✅ Planning opgeslagen! Je ziet deze terug na het opnieuw inloggen.");
+            ToonMelding("Planning opgeslagen!");
         }
-        catch (Exception ex)
-        {
-            ToonMelding("Fout bij opslaan: " + ex.Message, fout: true);
-        }
-        finally
-        {
-            bezig = false;
-            StateHasChanged();
-        }
+        catch (Exception ex) { ToonMelding("Fout bij opslaan: " + ex.Message, fout: true); }
+        finally { bezig = false; StateHasChanged(); }
     }
 
     private void WijzigDagLokaal(PlanningItem dag, string? waarde)
     {
-        if (int.TryParse(waarde, out var receptId) && receptId > 0)
+        if (int.TryParse(waarde, out var id) && id > 0)
         {
-            dag.fkRecept = receptId;
-            var recept = alleRecepten.FirstOrDefault(r => r.idRecept == receptId);
-            dag.receptNaam = recept?.receptNaam ?? "";
+            dag.fkRecept = id;
+            dag.receptNaam = alleRecepten.FirstOrDefault(r => r.idRecept == id)?.receptNaam ?? "";
             dag.beschrijving = "";
         }
     }
 
-    private void VerwijderDag(PlanningItem dag)
-    {
-        dag.fkRecept = 0;
-        dag.receptNaam = "";
-        dag.beschrijving = "";
-    }
+    private void VerwijderDag(PlanningItem dag) { dag.fkRecept = 0; dag.receptNaam = ""; dag.beschrijving = ""; }
+    private void ToonMelding(string tekst, bool fout = false) { melding = tekst; meldingFout = fout; }
 
-    private void ToonMelding(string tekst, bool fout = false)
+    private string DagNaam(DateOnly? datum) => datum?.DayOfWeek switch
     {
-        melding = tekst;
-        meldingFout = fout;
-    }
+        DayOfWeek.Monday => "Maandag",
+        DayOfWeek.Tuesday => "Dinsdag",
+        DayOfWeek.Wednesday => "Woensdag",
+        DayOfWeek.Thursday => "Donderdag",
+        DayOfWeek.Friday => "Vrijdag",
+        DayOfWeek.Saturday => "Zaterdag",
+        DayOfWeek.Sunday => "Zondag",
+        _ => ""
+    } ?? "";
 
-    private string DagNaam(DateOnly? datum)
-    {
-        if (!datum.HasValue) return "";
-        return datum.Value.DayOfWeek switch
-        {
-            DayOfWeek.Monday => "Maandag",
-            DayOfWeek.Tuesday => "Dinsdag",
-            DayOfWeek.Wednesday => "Woensdag",
-            DayOfWeek.Thursday => "Donderdag",
-            DayOfWeek.Friday => "Vrijdag",
-            DayOfWeek.Saturday => "Zaterdag",
-            DayOfWeek.Sunday => "Zondag",
-            _ => ""
-        };
-    }
-
-    private class LocalUser
-    {
-        public int IdGebruiker { get; set; }
-        public string? GebruikerUsername { get; set; }
-        public string? GebruikerEmail { get; set; }
-    }
-
-    public class PlanningDto
-    {
-        public string datum { get; set; } = "";  // string ipv DateOnly
-        public int fkRecept { get; set; }
-        public string receptNaam { get; set; } = "";
-        public string beschrijving { get; set; } = "";
-    }
-
-    public class PlanningItem
-    {
-        public DateOnly? datum { get; set; }
-        public int fkRecept { get; set; }
-        public string receptNaam { get; set; } = "";
-        public string beschrijving { get; set; } = "";
-    }
-
-    public class ReceptKeuze
-    {
-        public int idRecept { get; set; }
-        public string receptNaam { get; set; } = "";
-    }
+    private class LocalUser { public int IdGebruiker { get; set; } public string? GebruikerUsername { get; set; } public string? GebruikerEmail { get; set; } }
+    public class PlanningDto { public string datum { get; set; } = ""; public int fkRecept { get; set; } public string receptNaam { get; set; } = ""; public string beschrijving { get; set; } = ""; }
+    public class PlanningItem { public DateOnly? datum { get; set; } public int fkRecept { get; set; } public string receptNaam { get; set; } = ""; public string beschrijving { get; set; } = ""; }
+    public class ReceptKeuze { public int idRecept { get; set; } public string receptNaam { get; set; } = ""; }
 }

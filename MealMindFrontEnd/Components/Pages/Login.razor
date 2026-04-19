@@ -1,94 +1,483 @@
 ﻿@page "/login"
+@page "/"
 @inject IHttpClientFactory ClientFactory
 @inject UserState UserState
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @using System.Text.Json
 @rendermode InteractiveServer
+@layout Emptylayout
 
-<PageTitle>Login</PageTitle>
+<PageTitle>MealMind — Inloggen</PageTitle>
 
-<div style="max-width:420px; margin:0 auto;">
-    <div class="page-card mm-form">
-        <h2 style="color:var(--green-dark); text-align:center; margin-bottom:12px;">🥗 Inloggen</h2>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 
-        @if (!string.IsNullOrEmpty(foutmelding))
-        {
-            <p style="color:#b00020; text-align:center;">@foutmelding</p>
-        }
+<div class="ls">
+    <div class="ls-left">
+        <div class="ls-wrap">
+            <div class="ls-logo">
+                <img src="/logoMealMind.png" style="height:38px; width:38px; object-fit:contain;" alt="MealMind logo" />
+                <span class="ls-logo-text">MealMind</span>
+            </div>
 
-        <div class="form-group">
-            <label>E-mail of username</label>
-            <input @bind="identifier" type="text" />
+            <div class="ls-heading">
+                @if (toonRegistreer)
+                {
+                    <span>Maak een<br /><strong>account aan</strong></span>
+                }
+                else
+                {
+                    <span>Welkom<br /><strong>terug!</strong></span>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(foutmelding))
+            {
+                <div class="ls-error">@foutmelding</div>
+            }
+            @if (!string.IsNullOrEmpty(succesMelding))
+            {
+                <div class="ls-success">@succesMelding</div>
+            }
+
+            @if (!toonRegistreer)
+            {
+                <div class="ls-field">
+                    <label>E-mail of gebruikersnaam</label>
+                    <input @bind="identifier" type="text" placeholder="naam@mail.com" />
+                </div>
+                <div class="ls-field">
+                    <label>Wachtwoord</label>
+                    <input @bind="password" type="password" placeholder="••••••••••" />
+                </div>
+                <button class="ls-btn" @onclick="Loginfunc" disabled="@bezig">
+                    @if (bezig)
+                    {
+                        <span>⏳ Inloggen...</span>
+                    }
+                    else
+                    {
+
+                        <span>Inloggen</span>
+                    }
+                </button>
+                <div class="ls-switch">
+                    Nog geen account?
+                    <button class="ls-link" @onclick="NaarRegistreer">Registreer hier</button>
+                </div>
+            }
+            else
+            {
+                <div class="ls-field">
+                    <label>Gebruikersnaam</label>
+                    <input @bind="regUsername" type="text" placeholder="jouwusername" />
+                </div>
+                <div class="ls-field">
+                    <label>E-mailadres</label>
+                    <input @bind="regEmail" type="email" placeholder="naam@mail.com" />
+                </div>
+                <div class="ls-field">
+                    <label>Wachtwoord</label>
+                    <input @bind="regPassword" type="password" placeholder="••••••••••" />
+                </div>
+                <button class="ls-btn" @onclick="Registreer" disabled="@bezig">
+                    @if (bezig)
+                    {
+                        <span>⏳ Registreren...</span>
+                    }
+                    else
+                    {
+
+                        <span>Account aanmaken</span>
+                    }
+                </button>
+                <div class="ls-switch">
+                    Al een account?
+                    <button class="ls-link" @onclick="NaarLogin">Log in</button>
+                </div>
+            }
         </div>
+    </div>
 
-        <div class="form-group">
-            <label>Wachtwoord</label>
-            <input @bind="password" type="password" />
+    <div class="ls-right">
+        <svg class="ls-blob" viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#52c98a" />
+                    <stop offset="100%" stop-color="#1a5c45" />
+                </linearGradient>
+                <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#27a06a" stop-opacity="0.7" />
+                    <stop offset="100%" stop-color="#0d3d2c" stop-opacity="0.9" />
+                </linearGradient>
+                <linearGradient id="lg3" x1="100%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#8fe8bb" stop-opacity="0.5" />
+                    <stop offset="100%" stop-color="#27a06a" stop-opacity="0.3" />
+                </linearGradient>
+            </defs>
+            <rect width="600" height="700" fill="url(#lg1)" />
+            <path d="M480,80 C560,120 600,220 570,320 C540,420 460,480 370,500 C280,520 180,480 130,400 C80,320 100,200 160,140 C220,80 400,40 480,80 Z" fill="url(#lg2)" />
+            <path d="M80,400 C20,340 10,240 60,180 C110,120 200,100 280,130 C360,160 400,240 380,320 C360,400 280,460 200,450 C120,440 140,460 80,400 Z" fill="url(#lg3)" />
+            <circle cx="480" cy="580" r="100" fill="rgba(82,201,138,0.2)" />
+            <circle cx="100" cy="100" r="60" fill="rgba(255,255,255,0.08)" />
+        </svg>
+
+        <div class="ls-right-content">
+            <img src="/logoMealMind.png" style="height:38px; width:38px; object-fit:contain;" alt="MealMind logo" />
+            <div class="ls-right-title">Jouw week,<br />jouw maaltijden</div>
+            <div class="ls-right-sub">Plan je maaltijden, ontdek recepten<br />en eet gezonder zonder stress.</div>
+            <div class="ls-features">
+                <div class="ls-feature">✅ Automatische weekplanning</div>
+                <div class="ls-feature">🍽️ Honderden recepten</div>
+                <div class="ls-feature">💾 Opgeslagen in de cloud</div>
+            </div>
         </div>
-
-        <div style="margin-top:8px;">
-            <button class="btn-mm" @onclick="Loginfunc">Inloggen</button>
-        </div>
-
-        <p style="text-align:center; margin-top:12px; color:#666;">
-            Nog geen account? <a href="/registreer" style="color:var(--green-mid); font-weight:600;">Registreer hier</a>
-        </p>
     </div>
 </div>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .ls {
+        display: flex;
+        min-height: 100vh;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .ls-left {
+        flex: 0 0 460px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        padding: 48px 40px;
+    }
+
+    .ls-wrap {
+        width: 100%;
+        max-width: 360px;
+    }
+
+    .ls-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 40px;
+    }
+
+    .ls-logo-text {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 800;
+        font-size: 1.3rem;
+        color: #1a5c45;
+    }
+
+    .ls-heading {
+        font-family: 'Poppins', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 400;
+        color: #1a2e24;
+        line-height: 1.2;
+        margin-bottom: 32px;
+    }
+
+        .ls-heading strong {
+            font-weight: 800;
+            color: #27a06a;
+        }
+
+    .ls-field {
+        margin-bottom: 18px;
+    }
+
+        .ls-field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #6b8f7a;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ls-field input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #e0ede8;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            color: #1a2e24;
+            background: #f8fdf9;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            box-sizing: border-box;
+        }
+
+            .ls-field input:focus {
+                border-color: #27a06a;
+                box-shadow: 0 0 0 3px rgba(39,160,106,0.12);
+                background: #fff;
+            }
+
+    .ls-btn {
+        width: 100%;
+        padding: 13px;
+        background: linear-gradient(135deg, #27a06a, #52c98a);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 16px rgba(39,160,106,0.28);
+        transition: opacity 0.15s, transform 0.15s;
+    }
+
+        .ls-btn:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .ls-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .ls-switch {
+        text-align: center;
+        font-size: 0.9rem;
+        color: #6b8f7a;
+    }
+
+    .ls-link {
+        background: none;
+        border: none;
+        color: #27a06a;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 4px;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .ls-link:hover {
+            text-decoration: underline;
+        }
+
+    .ls-error {
+        background: #fff3f0;
+        border: 1.5px solid #f2c2b8;
+        color: #8a2b11;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        margin-bottom: 16px;
+    }
+
+    .ls-success {
+        background: #f0fdf7;
+        border: 1.5px solid #b2e8d0;
+        color: #1a5c45;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        margin-bottom: 16px;
+    }
+
+    .ls-right {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ls-blob {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .ls-right-content {
+        position: relative;
+        z-index: 2;
+        color: #fff;
+        padding: 48px;
+    }
+
+    .ls-right-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 2.6rem;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-bottom: 16px;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+
+    .ls-right-sub {
+        font-size: 1.05rem;
+        color: rgba(255,255,255,0.85);
+        line-height: 1.6;
+        margin-bottom: 32px;
+    }
+
+    .ls-features {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .ls-feature {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.92);
+        background: rgba(255,255,255,0.12);
+        padding: 10px 16px;
+        border-radius: 8px;
+        backdrop-filter: blur(4px);
+        display: inline-block;
+        width: fit-content;
+    }
+</style>
 
 @code {
     private string identifier = "";
     private string password = "";
     private string foutmelding = "";
+    private string succesMelding = "";
+    private bool bezig = false;
+    private bool toonRegistreer = false;
+
+    private string regUsername = "";
+    private string regEmail = "";
+    private string regPassword = "";
+
+    private void NaarRegistreer() { toonRegistreer = true; foutmelding = ""; succesMelding = ""; }
+    private void NaarLogin() { toonRegistreer = false; foutmelding = ""; succesMelding = ""; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (UserState.IsLoggedIn)
+            {
+                Nav.NavigateTo("/home");
+                return;
+            }
+            try
+            {
+                var json = await JS.InvokeAsync<string>("localStorage.getItem", "mmUser");
+                if (!string.IsNullOrEmpty(json))
+                {
+                    var obj = JsonSerializer.Deserialize<LocalUser?>(json);
+                    if (obj != null && obj.IdGebruiker > 0)
+                    {
+                        UserState.UserId = obj.IdGebruiker;
+                        UserState.UserName = obj.GebruikerUsername ?? obj.GebruikerEmail ?? "";
+                        Nav.NavigateTo("/home");
+                    }
+                }
+            }
+            catch { }
+        }
+    }
 
     private async Task Loginfunc()
     {
-        var client = ClientFactory.CreateClient("MealMindAPI");
-        var response = await client.PostAsJsonAsync("gebruikers/login", new { Identifier = identifier, Password = password });
-
-        if (response.IsSuccessStatusCode)
+        foutmelding = "";
+        bezig = true;
+        StateHasChanged();
+        try
         {
-            var gebruiker = await response.Content.ReadFromJsonAsync<GebruikerResponse>();
-            if (gebruiker != null)
+            var client = ClientFactory.CreateClient("MealMindAPI");
+            var response = await client.PostAsJsonAsync("gebruikers/login",
+                new { Identifier = identifier, Password = password });
+
+            if (response.IsSuccessStatusCode)
             {
-                UserState.UserId = gebruiker.IdGebruiker;
-                UserState.UserName = gebruiker.GebruikerUsername ?? gebruiker.GebruikerEmail ?? identifier;
-
-                // persist minimal user info to localStorage so NavMenu and pages can read it on reload
-                var userObj = new
+                var gebruiker = await response.Content.ReadFromJsonAsync<GebruikerResponse>();
+                if (gebruiker != null)
                 {
-                    gebruiker.IdGebruiker,
-                    gebruiker.GebruikerVoorNaam,
-                    gebruiker.GebruikerAchternaam,
-                    gebruiker.GebruikerUsername,
-                    gebruiker.GebruikerEmail
-                };
-                var json = JsonSerializer.Serialize(userObj);
-                await JS.InvokeVoidAsync("localStorage.setItem", "mmUser", json);
-                // also store userId for legacy pages
-                await JS.InvokeVoidAsync("localStorage.setItem", "userId", gebruiker.IdGebruiker.ToString());
-
-                Nav.NavigateTo("/planning");
+                    UserState.UserId = gebruiker.IdGebruiker;
+                    UserState.UserName = gebruiker.GebruikerUsername ?? gebruiker.GebruikerEmail ?? identifier;
+                    var userObj = new { gebruiker.IdGebruiker, gebruiker.GebruikerUsername, gebruiker.GebruikerEmail };
+                    await JS.InvokeVoidAsync("localStorage.setItem", "mmUser", JsonSerializer.Serialize(userObj));
+                    await JS.InvokeVoidAsync("localStorage.setItem", "userId", gebruiker.IdGebruiker.ToString());
+                    Nav.NavigateTo("/home");
+                }
             }
             else
             {
-                foutmelding = "Onverwacht antwoord van server.";
+                foutmelding = response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                    ? "Verkeerd e-mail of wachtwoord."
+                    : "Login mislukt.";
             }
         }
-        else
+        catch (Exception ex)
         {
-            var text = await response.Content.ReadAsStringAsync();
-            foutmelding = "Login mislukt: " + (string.IsNullOrWhiteSpace(text) ? response.StatusCode.ToString() : text);
+            foutmelding = "Verbindingsfout: " + ex.Message;
         }
+        finally { bezig = false; StateHasChanged(); }
+    }
+
+    private async Task Registreer()
+    {
+        foutmelding = "";
+        succesMelding = "";
+        bezig = true;
+        StateHasChanged();
+        try
+        {
+            var client = ClientFactory.CreateClient("MealMindAPI");
+            var response = await client.PostAsJsonAsync("gebruikers", new
+            {
+                Voornaam = regUsername,
+                Username = regUsername,
+                Email = regEmail,
+                Password = regPassword
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                succesMelding = "Account aangemaakt! Je kan nu inloggen.";
+                toonRegistreer = false;
+                identifier = regEmail;
+            }
+            else
+            {
+                var text = await response.Content.ReadAsStringAsync();
+                foutmelding = "Registratie mislukt: " + text;
+            }
+        }
+        catch (Exception ex)
+        {
+            foutmelding = "Verbindingsfout: " + ex.Message;
+        }
+        finally { bezig = false; StateHasChanged(); }
+    }
+
+    private class LocalUser
+    {
+        public int IdGebruiker { get; set; }
+        public string? GebruikerUsername { get; set; }
+        public string? GebruikerEmail { get; set; }
     }
 
     public class GebruikerResponse
     {
         public int IdGebruiker { get; set; }
-        public string GebruikerVoorNaam { get; set; } = "";
-        public string GebruikerAchternaam { get; set; } = "";
-        public string? GebruikerUsername { get; set; } = null;
-        public string? GebruikerEmail { get; set; } = null;
+        public string? GebruikerUsername { get; set; }
+        public string? GebruikerEmail { get; set; }
     }
 }
