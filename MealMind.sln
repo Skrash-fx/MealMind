@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36915.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MealMind", "MealMind\MealMind.csproj", "{17E26121-A810-43D0-A605-B9B26A22C50C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MealMindFrontEnd", "MealMindFrontEnd\MealMindFrontEnd.csproj", "{E81792FD-B925-4891-8E11-5EE71F426BF2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{17E26121-A810-43D0-A605-B9B26A22C50C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17E26121-A810-43D0-A605-B9B26A22C50C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17E26121-A810-43D0-A605-B9B26A22C50C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17E26121-A810-43D0-A605-B9B26A22C50C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E81792FD-B925-4891-8E11-5EE71F426BF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E81792FD-B925-4891-8E11-5EE71F426BF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E81792FD-B925-4891-8E11-5EE71F426BF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E81792FD-B925-4891-8E11-5EE71F426BF2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E5B48023-D57F-44CA-8F62-8E375C271FA2}
+	EndGlobalSection
+EndGlobal

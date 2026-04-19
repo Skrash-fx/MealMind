@@ -1,0 +1,136 @@
+﻿@using Microsoft.AspNetCore.Components.Routing
+@inject UserState UserState
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@using System.Text.Json
+
+<!-- Pure HTML/CSS toggle: no JS required for open/close -->
+<input id="nav-toggle" type="checkbox" class="nav-toggle" aria-hidden="true" />
+
+<header class="topbar">
+    <div class="topbar-brand">
+        <div class="brand-icon">🥗</div>
+        <div>
+            <div class="brand-name">MealMind</div>
+            <div class="brand-sub">Jouw week, jouw maaltijden</div>
+        </div>
+    </div>
+
+    <div class="topbar-right">
+        @if (UserState.IsLoggedIn)
+        {
+            <div class="user-badge" title="Ingelogd als">@UserState.UserName</div>
+        }
+        <label for="nav-toggle" class="hamburger" aria-hidden="true" role="button" title="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </label>
+    </div>
+</header>
+
+<div class="drawer-overlay" aria-hidden="true"></div>
+
+<aside class="drawer" role="navigation" aria-hidden="true">
+    <div class="drawer-header" style="justify-content:space-between; align-items:center;">
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div style="font-size:1.2rem;">🥗</div>
+            <div style="font-weight:700;">MealMind</div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+            @if (UserState.IsLoggedIn)
+            {
+                <button class="btn-mm-outline" @onclick="Logout" style="padding:6px 10px; font-size:0.9rem;">Logout</button>
+            }
+            <label for="nav-toggle" class="drawer-close" aria-label="Sluiten" style="cursor:pointer;">✕</label>
+        </div>
+    </div>
+
+    <ul class="drawer-links">
+        <li>
+            <label for="nav-toggle" class="drawer-link">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">🏠 Home</NavLink>
+            </label>
+        </li>
+        <li>
+            <label for="nav-toggle" class="drawer-link">
+                <NavLink class="nav-link" href="recepten">📚 Recepten</NavLink>
+            </label>
+        </li>
+        <li>
+            <label for="nav-toggle" class="drawer-link">
+                <NavLink class="nav-link" href="planning">📅 Planning</NavLink>
+            </label>
+        </li>
+        <li>
+            <label for="nav-toggle" class="drawer-link">
+                <NavLink class="nav-link" href="mijnplanning">🗓️ Mijn Planning</NavLink>
+            </label>
+        </li>
+        <li>
+            <label for="nav-toggle" class="drawer-link">
+                <NavLink class="nav-link" href="login">👤 Login</NavLink>
+            </label>
+        </li>
+    </ul>
+
+    <div class="drawer-footer" style="margin-top:auto; padding:16px; border-top:1px solid rgba(0,0,0,0.04);">
+        @if (UserState.IsLoggedIn)
+        {
+            <button class="btn-mm" @onclick="LogoutFromDrawer">Logout</button>
+        }
+    </div>
+</aside>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var json = await JS.InvokeAsync<string>("localStorage.getItem", "mmUser");
+                if (!string.IsNullOrEmpty(json))
+                {
+                    var obj = JsonSerializer.Deserialize<LocalUser?>(json);
+                    if (obj != null)
+                    {
+                        UserState.UserId = obj.IdGebruiker;
+                        UserState.UserName = obj.GebruikerVoorNaam ?? obj.GebruikerUsername ?? obj.GebruikerEmail ?? "";
+                        StateHasChanged();
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    private async Task Logout()
+    {
+        UserState.UserId = 0;
+        UserState.UserName = "";
+        await JS.InvokeVoidAsync("localStorage.removeItem", "mmUser");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userId");
+        Nav.NavigateTo("/");
+    }
+
+    private async Task LogoutFromDrawer()
+    {
+        // close drawer
+        await JS.InvokeVoidAsync("eval", "document.getElementById('nav-toggle') && (document.getElementById('nav-toggle').checked = false)");
+        // then logout
+        await Logout();
+    }
+
+    private class LocalUser
+    {
+        public int IdGebruiker { get; set; }
+        public string? GebruikerVoorNaam { get; set; }
+        public string? GebruikerUsername { get; set; }
+        public string? GebruikerEmail { get; set; }
+    }
+}
+

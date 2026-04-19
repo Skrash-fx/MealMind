@@ -1,0 +1,79 @@
+﻿@page "/recepten/{id:int}"
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Recept</PageTitle>
+
+<div>
+    @if (recept == null)
+    {
+        <p style="text-align:center; color:#999;">Laden...</p>
+    }
+    else
+    {
+        <div class="page-card">
+            <h2 style="color:var(--green-dark); margin-bottom:6px;">@recept.receptNaam</h2>
+            <p style="color:#666; font-size:15px; margin-bottom:14px;">@recept.receptBeshrijving</p>
+
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;">
+                @foreach (var cat in recept.categorieen)
+                {
+                    <span style="background:var(--accent); color:var(--green-dark); padding:6px 14px; border-radius:20px; font-weight:600;">@cat</span>
+                }
+            </div>
+
+            <h3 style="color:#333; margin-bottom:10px;">🧂 Ingrediënten</h3>
+            <div style="overflow:auto;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f7f7f7;">
+                            <th style="padding:12px; text-align:left;">Ingredient</th>
+                            <th style="padding:12px; text-align:left;">Hoeveelheid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ing in recept.ingredienten)
+                        {
+                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                <td style="padding:12px; color:#333;">@ing.ingredientNaam</td>
+                                <td style="padding:12px; color:#666;">@ing.hoeveelheidIngredient</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top:18px;">
+                <button class="btn-mm" @onclick="BackToList">← Terug naar overzicht</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private ReceptDetailfunc? recept;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var client = ClientFactory.CreateClient("MealMindAPI");
+            recept = await client.GetFromJsonAsync<ReceptDetailfunc>($"recepten/{Id}");
+            StateHasChanged();
+        }
+    }
+
+    private void BackToList() => Nav.NavigateTo("/recepten");
+
+    public class IngredientItem { public string ingredientNaam { get; set; } = ""; public string hoeveelheidIngredient { get; set; } = ""; }
+    public class ReceptDetailfunc
+    {
+        public int idRecept { get; set; }
+        public string receptNaam { get; set; } = "";
+        public string receptBeshrijving { get; set; } = "";
+        public List<IngredientItem> ingredienten { get; set; } = new();
+        public List<string> categorieen { get; set; } = new();
+    }
+}

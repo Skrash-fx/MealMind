@@ -1,0 +1,61 @@
+﻿@page "/registreer"
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Registreer</PageTitle>
+
+<div style="max-width:520px; margin:0 auto;">
+    <div class="page-card mm-form">
+        <h2 style="color:var(--green-dark); text-align:center; margin-bottom:12px;">📝 Registreer</h2>
+
+        @if (!string.IsNullOrEmpty(melding))
+        {
+            <p style="color:var(--green-mid); text-align:center;">@melding</p>
+        }
+
+        <div class="form-group"><label>Voornaam</label><input @bind="voornaam" type="text" /></div>
+        <div class="form-group"><label>Achternaam (optioneel)</label><input @bind="achternaam" type="text" /></div>
+        <div class="form-group"><label>Username</label><input @bind="username" type="text" /></div>
+        <div class="form-group"><label>E-mail</label><input @bind="email" type="email" /></div>
+        <div class="form-group"><label>Wachtwoord</label><input @bind="password" type="password" /></div>
+
+        <div style="margin-top:8px;">
+            <button class="btn-mm" @onclick="Register">Registreer</button>
+        </div>
+
+        <p style="text-align:center; margin-top:12px; color:#666;">
+            Al een account? <a href="/login" style="color:var(--green-mid); font-weight:600;">Login hier</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private string voornaam = "", achternaam = "", username = "", email = "", password = "", melding = "";
+
+    private async Task Register()
+    {
+        var client = ClientFactory.CreateClient("MealMindAPI");
+        var body = new
+        {
+            Voornaam = voornaam,
+            Achternaam = achternaam,
+            Username = username,
+            Email = email,
+            Password = password
+        };
+
+        var response = await client.PostAsJsonAsync("gebruikers", body);
+        if (response.IsSuccessStatusCode)
+        {
+            melding = "Account aangemaakt! Je kunt nu inloggen.";
+            await Task.Delay(900);
+            Nav.NavigateTo("/login");
+        }
+        else
+        {
+            var text = await response.Content.ReadAsStringAsync();
+            melding = "Er ging iets mis bij registreren: " + (string.IsNullOrWhiteSpace(text) ? response.StatusCode.ToString() : text);
+        }
+    }
+}

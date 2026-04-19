@@ -1,0 +1,107 @@
+﻿@page "/recepten/aanmaken"
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Nieuw recept</PageTitle>
+
+<div>
+    <div class="page-card mm-form">
+        <h2 style="color:var(--green-dark); margin-bottom:12px;">🍳 Nieuw Recept</h2>
+
+        <div class="form-group">
+            <label>Naam</label>
+            <input @bind="naam" type="text" />
+        </div>
+
+        <div class="form-group">
+            <label>Beschrijving</label>
+            <input @bind="beschrijving" type="text" />
+        </div>
+
+        <div class="form-group">
+            <label>Categorieën</label>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
+                @foreach (var cat in alleCats)
+                {
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" @onchange="e => ToggleCat(cat.idCategorie, (bool)e.Value!)" />
+                        @cat.categorieNaam
+                    </label>
+                }
+            </div>
+        </div>
+
+        <h4 style="margin-top:8px;">🧂 Ingrediënten</h4>
+        @foreach (var ing in ingredienten)
+        {
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input @bind="ing.Naam" placeholder="Naam" />
+                <input @bind="ing.Hoeveelheid" placeholder="Hoeveelheid" />
+            </div>
+        }
+        <div style="display:flex; gap:10px; margin-top:8px;">
+            <button class="btn-mm-outline" @onclick="() => ingredienten.Add(new())">+ Ingredient toevoegen</button>
+            <div style="flex:1"></div>
+        </div>
+
+        <div style="margin-top:18px;">
+            <button class="btn-mm" @onclick="Opslaan">Recept opslaan</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(melding))
+        {
+            <p style="color:var(--green-mid); text-align:center; margin-top:12px;">@melding</p>
+        }
+    </div>
+</div>
+
+@code {
+    private string naam = "", beschrijving = "", melding = "";
+    private List<IngredientRij> ingredienten = new() { new() };
+    private List<CatItem> alleCats = new();
+    private List<int> gekozenCats = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var client = ClientFactory.CreateClient("MealMindAPI");
+            alleCats = await client.GetFromJsonAsync<List<CatItem>>("categorieen") ?? new();
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleCat(int id, bool aangevinkt)
+    {
+        if (aangevinkt) gekozenCats.Add(id);
+        else gekozenCats.Remove(id);
+    }
+
+    private async Task Opslaan()
+    {
+        var client = ClientFactory.CreateClient("MealMindAPI");
+        var body = new
+        {
+            Naam = naam,
+            Beschrijving = beschrijving,
+            Ingredienten = ingredienten.Where(i => !string.IsNullOrEmpty(i.Naam)).Select(i => new { i.Naam, i.Hoeveelheid }),
+            CategorieIds = gekozenCats
+        };
+
+        var response = await client.PostAsJsonAsync("recepten", body);
+        if (response.IsSuccessStatusCode)
+        {
+            melding = "Recept opgeslagen!";
+            await Task.Delay(800);
+            Nav.NavigateTo("/recepten");
+        }
+        else
+        {
+            melding = "Er ging iets mis.";
+        }
+    }
+
+    public class IngredientRij { public string Naam { get; set; } = ""; public string Hoeveelheid { get; set; } = ""; }
+    public class CatItem { public int idCategorie { get; set; } public string categorieNaam { get; set; } = ""; }
+}

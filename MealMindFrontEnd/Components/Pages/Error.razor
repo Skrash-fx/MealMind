@@ -1,0 +1,59 @@
+﻿@page "/Error"
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Http
+
+<PageTitle>Error</PageTitle>
+
+<div class="error-page">
+    <div class="error-card">
+        <h1 class="text-danger">Er is iets misgegaan</h1>
+        <h2 class="text-muted">We konden je verzoek niet verwerken.</h2>
+
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <div class="error-detail" style="margin-top:12px; color:#6b2b2b; background:#fff3f0; padding:10px; border-radius:6px;">
+                <strong>Foutmelding:</strong>
+                <div style="margin-top:6px; word-break:break-word;">@Message</div>
+            </div>
+        }
+
+        @if (ShowRequestId)
+        {
+            <p style="margin-top:12px;">
+                <strong>Request ID:</strong> <code>@RequestId</code>
+            </p>
+        }
+
+        <div style="margin-top:18px; display:flex; gap:8px;">
+            <button class="btn-mm" @onclick="GoHome">Terug naar start</button>
+            <button class="btn-mm" @onclick="Reload">Herladen</button>
+        </div>
+
+        <div style="margin-top:14px; font-size:0.9rem; color:#666;">
+            Als het probleem blijft bestaan, probeer later opnieuw of controleer je netwerkverbinding.
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "message")]
+    public string? Message { get; set; }
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    private void GoHome() => Navigation.NavigateTo("/");
+
+    private void Reload() => Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+}

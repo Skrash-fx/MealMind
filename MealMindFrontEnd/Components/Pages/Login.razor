@@ -1,0 +1,96 @@
+﻿@page "/login"
+@inject IHttpClientFactory ClientFactory
+@inject UserState UserState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@using System.Text.Json
+@rendermode InteractiveServer
+
+<PageTitle>Login</PageTitle>
+
+<div style="max-width:420px; margin:0 auto;">
+    <div class="page-card mm-form">
+        <h2 style="color:var(--green-dark); text-align:center; margin-bottom:12px;">🥗 Inloggen</h2>
+
+        @if (!string.IsNullOrEmpty(foutmelding))
+        {
+            <p style="color:#b00020; text-align:center;">@foutmelding</p>
+        }
+
+        <div class="form-group">
+            <label>E-mail of username</label>
+            <input @bind="identifier" type="text" />
+        </div>
+
+        <div class="form-group">
+            <label>Wachtwoord</label>
+            <input @bind="password" type="password" />
+        </div>
+
+        <div style="margin-top:8px;">
+            <button class="btn-mm" @onclick="Loginfunc">Inloggen</button>
+        </div>
+
+        <p style="text-align:center; margin-top:12px; color:#666;">
+            Nog geen account? <a href="/registreer" style="color:var(--green-mid); font-weight:600;">Registreer hier</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private string identifier = "";
+    private string password = "";
+    private string foutmelding = "";
+
+    private async Task Loginfunc()
+    {
+        var client = ClientFactory.CreateClient("MealMindAPI");
+        var response = await client.PostAsJsonAsync("gebruikers/login", new { Identifier = identifier, Password = password });
+
+        if (response.IsSuccessStatusCode)
+        {
+            var gebruiker = await response.Content.ReadFromJsonAsync<GebruikerResponse>();
+            if (gebruiker != null)
+            {
+                UserState.UserId = gebruiker.IdGebruiker;
+                UserState.UserName = string.IsNullOrWhiteSpace(gebruiker.GebruikerVoorNaam)
+                    ? (gebruiker.GebruikerUsername ?? gebruiker.GebruikerEmail ?? identifier)
+                    : gebruiker.GebruikerVoorNaam;
+
+                // persist minimal user info to localStorage so NavMenu and pages can read it on reload
+                var userObj = new
+                {
+                    gebruiker.IdGebruiker,
+                    gebruiker.GebruikerVoorNaam,
+                    gebruiker.GebruikerAchternaam,
+                    gebruiker.GebruikerUsername,
+                    gebruiker.GebruikerEmail
+                };
+                var json = JsonSerializer.Serialize(userObj);
+                await JS.InvokeVoidAsync("localStorage.setItem", "mmUser", json);
+                // also store userId for legacy pages
+                await JS.InvokeVoidAsync("localStorage.setItem", "userId", gebruiker.IdGebruiker.ToString());
+
+                Nav.NavigateTo("/mijnplanning");
+            }
+            else
+            {
+                foutmelding = "Onverwacht antwoord van server.";
+            }
+        }
+        else
+        {
+            var text = await response.Content.ReadAsStringAsync();
+            foutmelding = "Login mislukt: " + (string.IsNullOrWhiteSpace(text) ? response.StatusCode.ToString() : text);
+        }
+    }
+
+    public class GebruikerResponse
+    {
+        public int IdGebruiker { get; set; }
+        public string GebruikerVoorNaam { get; set; } = "";
+        public string GebruikerAchternaam { get; set; } = "";
+        public string? GebruikerUsername { get; set; } = null;
+        public string? GebruikerEmail { get; set; } = null;
+    }
+}

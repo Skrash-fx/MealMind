@@ -1,0 +1,68 @@
+﻿@page "/recepten"
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Recepten</PageTitle>
+
+<div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;">
+        <h2 class="page-title">🍽️ Alle Recepten</h2>
+        <a class="btn-mm" href="/recepten/aanmaken">+ Nieuw recept</a>
+    </div>
+
+    @if (recepten == null)
+    {
+        <p style="text-align:center; color:#999;">Laden...</p>
+    }
+    else if (!recepten.Any())
+    {
+        <div class="mm-card" style="text-align:center; padding:36px;">
+            <div style="font-size:2rem; margin-bottom:8px;">🍽️</div>
+            <div style="color:var(--green-mid); font-weight:700; margin-bottom:10px;">Nog geen recepten</div>
+            <a class="btn-mm" href="/recepten/aanmaken">Voeg er één toe</a>
+        </div>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var r in recepten)
+            {
+                <div class="mm-card" style="cursor:pointer;" @onclick="() => OpenDetail(r.idRecept)">
+                    <h4 style="color:var(--green-dark); margin-bottom:8px;">@r.receptNaam</h4>
+                    <p style="color:#666; margin-bottom:12px;">@r.receptBeshrijving</p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        @foreach (var cat in r.categorieen)
+                        {
+                            <span style="background:var(--accent); color:var(--green-dark); padding:6px 10px; border-radius:20px; font-size:13px;">@cat</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<ReceptItem>? recepten;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var client = ClientFactory.CreateClient("MealMindAPI");
+            recepten = await client.GetFromJsonAsync<List<ReceptItem>>("recepten") ?? new();
+            StateHasChanged();
+        }
+    }
+
+    private void OpenDetail(int id) => Nav.NavigateTo($"/recepten/{id}");
+
+    public class ReceptItem
+    {
+        public int idRecept { get; set; }
+        public string receptNaam { get; set; } = "";
+        public string receptBeshrijving { get; set; } = "";
+        public List<string> categorieen { get; set; } = new();
+    }
+}

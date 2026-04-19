@@ -1,0 +1,104 @@
+﻿@page "/planning"
+@inject IHttpClientFactory ClientFactory
+@inject UserState UserState
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Weekplanning</PageTitle>
+
+<div>
+    @if (!UserState.IsLoggedIn)
+    {
+        <div class="mm-card" style="text-align:center; padding:28px;">
+            <div style="font-size:1.6rem; margin-bottom:8px;">🔒</div>
+            <div style="font-weight:700; color:var(--green-mid); margin-bottom:8px;">Je bent niet ingelogd</div>
+            <a class="btn-mm" href="/login">Login</a>
+        </div>
+    }
+    else
+    {
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h2 class="page-title">📅 Weekplanning</h2>
+            <button class="btn-mm" @onclick="Genereer">🔀 Genereer planning</button>
+        </div>
+
+        @if (planning == null)
+        {
+            <p style="text-align:center; color:#999;">Laden...</p>
+        }
+        else if (!planning.Any())
+        {
+            <div class="mm-card" style="text-align:center; padding:36px;">
+                <div style="font-size:1.6rem; margin-bottom:8px;">📭</div>
+                <div style="color:var(--green-mid); font-weight:700; margin-bottom:10px;">Nog geen planning</div>
+                <button class="btn-mm" @onclick="Genereer">Genereer planning</button>
+            </div>
+        }
+        else
+        {
+            <div style="display:grid; gap:12px;">
+                @foreach (var dag in planning)
+                {
+                    <div class="mm-card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:700; color:var(--green-mid); margin-bottom:6px;">@dag.datum?.ToString("dddd dd/MM")</div>
+                            <div style="font-size:16px; color:var(--green-dark);">@dag.receptNaam</div>
+                            <div style="color:#777; font-size:13px;">@dag.beschrijving</div>
+                        </div>
+
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <select @onchange="e => WijzigDag(dag.datum!.Value, int.Parse(e.Value!.ToString()!))" style="padding:8px; border-radius:8px;">
+                                <option value="">Wijzig recept</option>
+                                @foreach (var r in alleRecepten)
+                                {
+                                    <option value="@r.idRecept">@r.receptNaam</option>
+                                }
+                            </select>
+                            <a class="btn-mm-outline" href="/recepten/@dag.fkRecept">Bekijk</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<PlanningItem>? planning;
+    private List<ReceptKeuze> alleRecepten = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LaadData();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LaadData()
+    {
+        var client = ClientFactory.CreateClient("MealMindAPI");
+        planning = await client.GetFromJsonAsync<List<PlanningItem>>($"gebruikers/{UserState.UserId}/planning") ?? new();
+        alleRecepten = await client.GetFromJsonAsync<List<ReceptKeuze>>("recepten") ?? new();
+    }
+
+    private async Task Genereer()
+    {
+        var client = ClientFactory.CreateClient("MealMindAPI");
+        await client.PostAsync($"gebruikers/{UserState.UserId}/planning/genereer", null);
+        await LaadData();
+        StateHasChanged();
+    }
+
+    private async Task WijzigDag(DateOnly datum, int receptId)
+    {
+        var client = ClientFactory.CreateClient("MealMindAPI");
+        await client.PutAsJsonAsync($"gebruikers/{UserState.UserId}/planning/{datum:yyyy-MM-dd}", new { ReceptId = receptId });
+        await LaadData();
+        StateHasChanged();
+    }
+
+    public class PlanningItem { public DateOnly? datum { get; set; } public int fkRecept { get; set; } public string receptNaam { get; set; } = ""; public string beschrijving { get; set; } = ""; }
+    public class ReceptKeuze { public int idRecept { get; set; } public string receptNaam { get; set; } = ""; }
+}
